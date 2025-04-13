@@ -41,8 +41,9 @@ def evaluate(board: chess.Board) -> float:
             material_score += value if piece.color == chess.WHITE else -value
 
     # Evaluate mobility (number of legal moves)
-    mobility_score = board.legal_moves.count(
-    ) if board.turn == chess.WHITE else board.legal_moves.count()
+    mobility_score = board.legal_moves.count()
+    mobility_score = mobility_score * \
+        10 if board.turn == chess.WHITE else -mobility_score * 10
 
     # Evaluate pawn structure (penalize doubled and isolated pawns)
     pawn_structure_score = 0
@@ -178,41 +179,43 @@ def draw_pieces(board: chess.Board) -> None:
 
 
 @func_set_timeout(TIME)
-def evaluate_algorithm(env: gym.Env, algorithm: str, depth: int = 3) -> None:
+def evaluate_algorithm(env: gym.Env, algorithm: str, depth: int = 3) -> list[chess.Move]:
     done: bool = False
-    clock: pygame.time.Clock = pygame.time.Clock()
+    moves: list[chess.Move] = []
 
     while not done:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                done = True
-                break
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    done = True
-                    break
-
         if env.unwrapped._board.turn == chess.WHITE:
-            current_board: chess.Board = env.unwrapped._board.copy()  # type: ignore
+            current_board: chess.Board = env.unwrapped._board.copy()
             best_move: Optional[chess.Move] = get_best_move(
                 current_board, depth=depth, algorithm=algorithm)
-            print(f"Best move: {best_move}")
             if best_move:
                 _, _, done, _ = env.step(best_move)
+                moves.append(best_move)
         else:
-            legal_moves: list[chess.Move] = list(env.legal_moves)
-            if legal_moves:
-                random_move: chess.Move = random.choice(legal_moves)
-                _, _, done, _ = env.step(random_move)
-        draw_board()
-        draw_pieces(env.unwrapped._board)
-        pygame.display.flip()
-        clock.tick(15)
+            current_board: chess.Board = env.unwrapped._board.copy()
+            best_move: Optional[chess.Move] = get_best_move(
+                current_board, depth=depth, algorithm=algorithm)
+            if best_move:
+                _, _, done, _ = env.step(best_move)
+                moves.append(best_move)
+    return moves
 
 
 if __name__ == "__main__":
 
     env = cast(gym.Env, gym.make('Chess-v0'))
+    env.reset()
+
+    start_time: float = time.time()
+    moves: list[chess.Move] = []
+    try:
+        moves = evaluate_algorithm(env, "minimax")
+        end_time: float = time.time()
+        elapsed_time: float = end_time - start_time
+        print(f"Algorithm executed in {elapsed_time:.2f} seconds.")
+    except FunctionTimedOut:
+        print("Algorithm timed out.")
+
     env.reset()
 
     pygame.init()
@@ -234,6 +237,18 @@ if __name__ == "__main__":
         PIECE_IMAGES[piece] = pygame.image.load(
             os.path.join(PIECES_FOLDER, filename))
 
-    evaluate_algorithm(env, "minimax")
+    env.reset()
+
+    for move in moves:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+        draw_board()
+        draw_pieces(env.unwrapped._board)
+        pygame.display.flip()
+        time.sleep(1)
+        env.step(move)
+
     pygame.quit()
     env.close()
