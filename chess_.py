@@ -9,7 +9,7 @@ import math
 import time
 import os
 
-from typing import Optional, cast, Callable
+from typing import Optional, cast
 
 from func_timeout import func_set_timeout
 from func_timeout.exceptions import FunctionTimedOut
@@ -18,8 +18,48 @@ TIME: int = 600
 
 
 def evaluate(board: chess.Board) -> float:
-    # TODO: Implement a better evaluation function.
-    return 0.0
+    """
+    Heuristic function to evaluate a chess position.
+    Positive scores favor White, negative scores favor Black.
+    """
+    # Piece values
+    piece_values = {
+        chess.PAWN: 100,
+        chess.KNIGHT: 320,
+        chess.BISHOP: 330,
+        chess.ROOK: 500,
+        chess.QUEEN: 900,
+        chess.KING: 20000
+    }
+
+    # Evaluate material
+    material_score = 0
+    for square in chess.SQUARES:
+        piece = board.piece_at(square)
+        if piece:
+            value = piece_values[piece.piece_type]
+            material_score += value if piece.color == chess.WHITE else -value
+
+    # Evaluate mobility (number of legal moves)
+    mobility_score = board.legal_moves.count(
+    ) if board.turn == chess.WHITE else board.legal_moves.count()
+
+    # Evaluate pawn structure (penalize doubled and isolated pawns)
+    pawn_structure_score = 0
+    for color in [chess.WHITE, chess.BLACK]:
+        pawns = board.pieces(chess.PAWN, color)
+        files = [chess.square_file(p) for p in pawns]
+        for file in files:
+            if files.count(file) > 1:  # Doubled pawns penalty
+                pawn_structure_score += -20 if color == chess.WHITE else 20
+            # Isolated pawns penalty
+            if file not in files and (file - 1 not in files and file + 1 not in files):
+                pawn_structure_score += -15 if color == chess.WHITE else 15
+
+    # Combine scores
+    total_score = material_score + mobility_score + pawn_structure_score
+
+    return total_score
 
 
 def minimax(board: chess.Board, depth: int, maximizing_player: bool) -> float:
