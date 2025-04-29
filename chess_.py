@@ -1,13 +1,12 @@
 import gym
 import gym_chess
 
-import pygame
 import chess
+import chess.svg
 
-import random
 import math
 import time
-import os
+import argparse
 
 from typing import Optional, cast
 
@@ -131,6 +130,13 @@ def alphabeta(board: chess.Board, isMaxNode: bool, depth: int = 3, alpha: float 
 
 
 def get_best_move(board: chess.Board, depth: int = 3, algorithm: str = "minimax") -> Optional[chess.Move]:
+    """
+    @param board: chess.Board
+    @param depth: int
+    @param algorithm: str
+    @return: Optional[chess.Move]
+    Get the best move for the current player using the specified algorithm.
+    """
     best_move: Optional[chess.Move] = None
     best_value: float = -math.inf
     for move in board.legal_moves:
@@ -146,62 +152,35 @@ def get_best_move(board: chess.Board, depth: int = 3, algorithm: str = "minimax"
     return best_move
 
 
-def draw_board() -> None:
-    """
-    @return: None
-    Draw the chessboard using Pygame.
-    """
-    colors: list[tuple[int, int, int]] = [(238, 238, 210), (118, 150, 86)]
-    for row in range(8):
-        for col in range(8):
-            color: tuple[int, int, int] = colors[(row + col) % 2]
-            pygame.draw.rect(screen, color,
-                             pygame.Rect(col*SQ_SIZE, row*SQ_SIZE, SQ_SIZE, SQ_SIZE))
-
-
-def draw_pieces(board: chess.Board) -> None:
-    """
-    @param board: chess.Board
-    @return: None
-    Draw pieces on the board using Pygame.
-    The pieces are represented by images loaded from the 'pieces' folder.
-    """
-
-    for square in chess.SQUARES:
-        piece = board.piece_at(square)
-        if piece:
-            symbol: str = piece.symbol()
-            piece_image: pygame.Surface = PIECE_IMAGES[symbol]
-            x: int = chess.square_file(square) * SQ_SIZE
-            y: int = (7 - chess.square_rank(square)) * SQ_SIZE
-            screen.blit(pygame.transform.scale(
-                piece_image, (SQ_SIZE, SQ_SIZE)), (x, y))
-
-
 @func_set_timeout(TIME)
 def evaluate_algorithm(env: gym.Env, algorithm: str, depth: int = 3) -> list[chess.Move]:
+    """
+    @param env: gym.Env
+    @param algorithm: str
+    @param depth: int
+    @return: list[chess.Move]
+    Evaluate the algorithm using the chess environment.
+    """
     done: bool = False
     moves: list[chess.Move] = []
-
+    i = 0
     while not done:
-        if env.unwrapped._board.turn == chess.WHITE:
-            current_board: chess.Board = env.unwrapped._board.copy()
-            best_move: Optional[chess.Move] = get_best_move(
-                current_board, depth=depth, algorithm=algorithm)
-            if best_move:
-                _, _, done, _ = env.step(best_move)
-                moves.append(best_move)
-        else:
-            current_board: chess.Board = env.unwrapped._board.copy()
-            best_move: Optional[chess.Move] = get_best_move(
-                current_board, depth=depth, algorithm=algorithm)
-            if best_move:
-                _, _, done, _ = env.step(best_move)
-                moves.append(best_move)
+        current_board: chess.Board = env.unwrapped._board.copy()
+        best_move: Optional[chess.Move] = get_best_move(
+            current_board, depth=depth, algorithm=algorithm)
+        if best_move:
+            _, _, done, _ = env.step(best_move)
+            moves.append(best_move)
     return moves
 
 
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(
+        "Evaluation of Minimax and Alpha-Beta pruning")
+    parser.add_argument("--algorithm", type=str, default="minimax")
+
+    args = parser.parse_args()
 
     env = cast(gym.Env, gym.make('Chess-v0'))
     env.reset()
@@ -209,7 +188,8 @@ if __name__ == "__main__":
     start_time: float = time.time()
     moves: list[chess.Move] = []
     try:
-        moves = evaluate_algorithm(env, "minimax")
+        print(f"Evaluating {args.algorithm}")
+        moves = evaluate_algorithm(env, args.algorithm)
         end_time: float = time.time()
         elapsed_time: float = end_time - start_time
         print(f"Algorithm executed in {elapsed_time:.2f} seconds.")
@@ -218,37 +198,12 @@ if __name__ == "__main__":
 
     env.reset()
 
-    pygame.init()
-    WINDOW_SIZE: int = 640
-    SQ_SIZE: int = WINDOW_SIZE // 8
+    with open(f"gameplay_frames/svg/{args.algorithm}_frame_000.svg", "w") as f:
+        f.write(chess.svg.board(env.unwrapped._board, size=500))
 
-    screen: pygame.Surface = pygame.display.set_mode(
-        (WINDOW_SIZE, WINDOW_SIZE))
-    pygame.display.set_caption("Chess AI - Minimax")
-
-    PIECES_FOLDER: str = os.path.join(os.path.dirname(__file__), 'pieces')
-    PIECE_IMAGES: dict[str, pygame.Surface] = {}
-    PIECES_DICT = {
-        'r': 'black_rook.svg', 'n': 'black_knight.svg', 'b': 'black_bishop.svg', 'q': 'black_queen.svg', 'k': 'black_king.svg', 'p': 'black_pawn.svg',
-        'R': 'white_rook.svg', 'N': 'white_knight.svg', 'B': 'white_bishop.svg', 'Q': 'white_queen.svg', 'K': 'white_king.svg', 'P': 'white_pawn.svg'
-    }
-
-    for piece, filename in PIECES_DICT.items():
-        PIECE_IMAGES[piece] = pygame.image.load(
-            os.path.join(PIECES_FOLDER, filename))
-
-    env.reset()
-
-    for move in moves:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
-        draw_board()
-        draw_pieces(env.unwrapped._board)
-        pygame.display.flip()
-        time.sleep(1)
+    for idx, move in enumerate(moves):
         env.step(move)
+        with open(f"gameplay_frames/svg/{args.algorithm}_frame_{idx+1:03d}.svg", "w") as f:
+            f.write(chess.svg.board(env.unwrapped._board, size=500))
 
-    pygame.quit()
     env.close()
