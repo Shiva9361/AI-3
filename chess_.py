@@ -198,12 +198,12 @@ if __name__ == "__main__":
 
     env.reset()
 
-    with open(f"gameplay_frames/svg/{args.algorithm}_frame_000.svg", "w") as f:
+    with open(f"gameplay_frames/{args.algorithm}_frame_000.svg", "w") as f:
         f.write(chess.svg.board(env.unwrapped._board, size=500))
 
     for idx, move in enumerate(moves):
         env.step(move)
-        with open(f"gameplay_frames/svg/{args.algorithm}_frame_{idx+1:03d}.svg", "w") as f:
+        with open(f"gameplay_frames/{args.algorithm}_frame_{idx+1:03d}.svg", "w") as f:
             f.write(chess.svg.board(env.unwrapped._board, size=500))
 
     env.close()
