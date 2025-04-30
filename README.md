@@ -57,7 +57,7 @@ pip3 install -r requirements.txt
 
 ---
 
-## Heuristic Evaluation
+## Heuristic Function
 
 The AI scores each chess board position based on:
 
@@ -73,6 +73,10 @@ The AI scores each chess board position based on:
   - **Isolated Pawns**: -15 (Minimax), +15 (Opponent)
 
 Positive scores favor Minimax Player; negative scores favor opponent.
+
+- The initial implementation was biased to make white win and black loose if both players used minimax
+- The implementation was changed to return evaluation score based on whether Minimax was called by white or black
+- Initial implementation result is found in [Result](https://github.com/Shiva9361/AI-3/blob/main/minimax.mp4) and newer at [Result2](https://github.com/Shiva9361/AI-3/blob/main/minimax_iswhite.mp4)
 
 ---
 
