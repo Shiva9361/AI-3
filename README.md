@@ -65,7 +65,7 @@ The AI scores each chess board position based on:
   Assigns standard values to pieces (Pawn=100, Knight=320, etc.).
 
 - **Mobility**:
-  Rewards positions with more legal moves (weighted by 10).
+  Rewards positions with more legal moves (weighted by 10) if it's minimax's turn else penalizes.
 
 - **Pawn Structure**:
   Penalizes:
