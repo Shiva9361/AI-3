@@ -16,10 +16,10 @@ from func_timeout.exceptions import FunctionTimedOut
 TIME: int = 600
 
 
-def evaluate(board: chess.Board) -> float:
+def evaluate(board: chess.Board, iswhite: bool = True) -> float:
     """
     Heuristic function to evaluate a chess position.
-    Positive scores favor White, negative scores favor Black.
+    Positive scores favor minmaxed player, negative scores favor opponent.
     """
     # Piece values
     piece_values = {
@@ -59,12 +59,12 @@ def evaluate(board: chess.Board) -> float:
     # Combine scores
     total_score = material_score + mobility_score + pawn_structure_score
 
-    return total_score
+    return total_score if iswhite else -total_score
 
 
-def minimax(board: chess.Board, depth: int, maximizing_player: bool) -> float:
+def minimax(board: chess.Board, depth: int, maximizing_player: bool, iswhite: bool = True) -> float:
     """
-    @param board: chess.Board
+    @param board: chess.Board   
     @param depth: int
     @param maximizing_player: bool
     @return: float
@@ -72,13 +72,13 @@ def minimax(board: chess.Board, depth: int, maximizing_player: bool) -> float:
     """
 
     if depth == 0 or board.is_game_over():
-        return evaluate(board)
+        return evaluate(board, iswhite)
 
     if maximizing_player:
         max_eval: float = -math.inf
         for move in board.legal_moves:
             board.push(move)
-            eval: float = minimax(board, depth-1, False)
+            eval: float = minimax(board, depth-1, False, iswhite)
             board.pop()
             max_eval = max(max_eval, eval)
         return max_eval
@@ -86,13 +86,13 @@ def minimax(board: chess.Board, depth: int, maximizing_player: bool) -> float:
         min_eval: float = math.inf
         for move in board.legal_moves:
             board.push(move)
-            eval: float = minimax(board, depth-1, True)
+            eval: float = minimax(board, depth-1, True, iswhite)
             board.pop()
             min_eval = min(min_eval, eval)
         return min_eval
 
 
-def alphabeta(board: chess.Board, isMaxNode: bool, depth: int = 3, alpha: float = -math.inf, beta: float = math.inf,) -> float:
+def alphabeta(board: chess.Board, isMaxNode: bool, depth: int = 3, alpha: float = -math.inf, beta: float = math.inf, iswhite: bool = True) -> float:
     """
     @param board: chess.Board
     @param depth: int
@@ -103,13 +103,14 @@ def alphabeta(board: chess.Board, isMaxNode: bool, depth: int = 3, alpha: float 
     """
 
     if depth == 0 or board.is_game_over():
-        return evaluate(board)
+        return evaluate(board, iswhite)
 
     if isMaxNode:
         max_eval: float = -math.inf
         for move in board.legal_moves:
             board.push(move)
-            eval: float = alphabeta(board, False, depth-1, alpha, beta)
+            eval: float = alphabeta(
+                board, False, depth-1, alpha, beta, iswhite)
             board.pop()
             max_eval = max(max_eval, eval)
             alpha = max(alpha, eval)
@@ -120,7 +121,7 @@ def alphabeta(board: chess.Board, isMaxNode: bool, depth: int = 3, alpha: float 
         min_eval: float = math.inf
         for move in board.legal_moves:
             board.push(move)
-            eval: float = alphabeta(board, True, depth-1, alpha, beta)
+            eval: float = alphabeta(board, True, depth-1, alpha, beta, iswhite)
             board.pop()
             min_eval = min(min_eval, eval)
             beta = min(beta, eval)
@@ -129,7 +130,7 @@ def alphabeta(board: chess.Board, isMaxNode: bool, depth: int = 3, alpha: float 
         return min_eval
 
 
-def get_best_move(board: chess.Board, depth: int = 3, algorithm: str = "minimax") -> Optional[chess.Move]:
+def get_best_move(board: chess.Board, depth: int = 3, algorithm: str = "minimax", iswhite: bool = True) -> Optional[chess.Move]:
     """
     @param board: chess.Board
     @param depth: int
@@ -142,10 +143,10 @@ def get_best_move(board: chess.Board, depth: int = 3, algorithm: str = "minimax"
     for move in board.legal_moves:
         board.push(move)
         if algorithm == "minimax":
-            value: float = minimax(board, depth-1, False)
+            value: float = minimax(board, depth-1, False, iswhite)
         else:
             value: float = alphabeta(
-                board, False, depth-1, -math.inf, math.inf)
+                board, False, depth-1, -math.inf, math.inf, iswhite)
         board.pop()
         if value > best_value:
             best_value = value
@@ -164,11 +165,11 @@ def evaluate_algorithm(env: gym.Env, algorithm: str, depth: int = 3) -> list[che
     """
     done: bool = False
     moves: list[chess.Move] = []
-    i = 0
+
     while not done:
         current_board: chess.Board = env.unwrapped._board.copy()
         best_move: Optional[chess.Move] = get_best_move(
-            current_board, depth=depth, algorithm=algorithm)
+            current_board, depth=depth, algorithm=algorithm, iswhite=env.unwrapped._board.turn == chess.WHITE)
         if best_move:
             _, _, done, _ = env.step(best_move)
             moves.append(best_move)
