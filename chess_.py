@@ -144,7 +144,8 @@ def get_best_move(board: chess.Board, depth: int = 3, algorithm: str = "minimax"
         if algorithm == "minimax":
             value: float = minimax(board, depth-1, False)
         else:
-            value: float = alphabeta(board, True, depth-1, -math.inf, math.inf)
+            value: float = alphabeta(
+                board, False, depth-1, -math.inf, math.inf)
         board.pop()
         if value > best_value:
             best_value = value
