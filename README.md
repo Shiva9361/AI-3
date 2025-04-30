@@ -1,7 +1,9 @@
 # AI Assignment 3
 
-### S Shivadharshan : CS22B057 `Shiva9361` 
-### P Akilesh : CS22B040 `Akileshdash` 
+### S Shivadharshan : CS22B057 `Shiva9361`
+
+### P Akilesh : CS22B040 `Akileshdash`
+
 ---
 
 # ♟️ Chess Env with Minimax and Alpha-Beta Pruning
@@ -12,19 +14,18 @@ This project implements a chess-playing AI using the `minimax` and `alpha-beta p
 
 ## Features
 
--  **Minimax** algorithm with depth-based evaluation  
--  **Alpha-Beta Pruning** for faster move search  
--  **Custom Heuristic Function** to evaluate positions  
--  **Timeout Control** to avoid long computations  
--  **SVG Visualization** of gameplay
+- **Minimax** algorithm with depth-based evaluation
+- **Alpha-Beta Pruning** for faster move search
+- **Custom Heuristic Function** to evaluate positions
+- **Timeout Control** to avoid long computations
+- **SVG Visualization** of gameplay
 
 ---
-
 
 ## Clone the Repository
 
 ```bash
-git clone --recurse-submodules https://github.com/Shiva9361/AI-3.git
+git clone https://github.com/Shiva9361/AI-3.git
 cd AI-3
 ```
 
@@ -38,6 +39,7 @@ cd AI-3
 python3.10 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
+
 2. **Install Dependencies**
 
 ```bash
@@ -67,10 +69,10 @@ The AI scores each chess board position based on:
 
 - **Pawn Structure**:
   Penalizes:
-  - **Doubled Pawns**: -20 (White), +20 (Black)
-  - **Isolated Pawns**: -15 (White), +15 (Black)
+  - **Doubled Pawns**: -20 (Minimax), +20 (Opponent)
+  - **Isolated Pawns**: -15 (Minimax), +15 (Opponent)
 
-Positive scores favor White; negative scores favor Black.
+Positive scores favor Minimax Player; negative scores favor opponent.
 
 ---
 
@@ -89,16 +91,16 @@ To prevent long or infinite evaluations, the code uses `func_timeout` to enforce
 
 ## Output
 
-- SVG files of each move step are saved to `gameplay_frames/`  
+- SVG files of each move step are saved to `gameplay_frames/`
 - Each frame visualizes the board after the corresponding move.
 
 ---
 
 ## Arguments
 
-| Argument     | Description                            | Default    |
-|--------------|----------------------------------------|------------|
-| `--algorithm`| Select between `minimax` and `alphabeta`| `minimax`  |
+| Argument      | Description                              | Default   |
+| ------------- | ---------------------------------------- | --------- |
+| `--algorithm` | Select between `minimax` and `alphabeta` | `minimax` |
 
 ---
 
@@ -109,8 +111,7 @@ To prevent long or infinite evaluations, the code uses `func_timeout` to enforce
 
 ---
 
-### Slide Deck  : Access [here](https://docs.google.com/presentation/d/1D8ZQTIRZ715QmdwBinPVTuOWpxJJOafepQp6NCMuwbA/edit?usp=sharing)
-
+### Slide Deck : Access [here](https://docs.google.com/presentation/d/1D8ZQTIRZ715QmdwBinPVTuOWpxJJOafepQp6NCMuwbA/edit?usp=sharing)
 
 ---
 
@@ -119,5 +120,3 @@ To prevent long or infinite evaluations, the code uses `func_timeout` to enforce
 - Python **3.10 or higher**
 - GYM no longer works in python 3.12, tested to work with 3.10
 - See `requirements.txt` for all package dependencies
-
-
